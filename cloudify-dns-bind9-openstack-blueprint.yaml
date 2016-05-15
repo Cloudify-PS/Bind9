@@ -1,0 +1,123 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+imports:
+
+  - http://www.getcloudify.org/spec/cloudify/3.3.1/types.yaml 
+  - http://www.getcloudify.org/spec/openstack-plugin/1.3.1/plugin.yaml 
+  - http://www.getcloudify.org/spec/diamond-plugin/1.3.1/plugin.yaml 
+  - types/bind9.yaml
+  - types/healing-types.yaml
+
+inputs:
+
+  # Openstack Inputs
+
+  openstack_image_id:
+    type: string
+    default: '05bb3a46-ca32-4032-bedd-8d7ebd5c8100'
+
+  openstack_flavor_id:
+    type: string
+    default: '62ed898b-0871-481a-9bb4-ac5f81263b33'
+
+  # General Inputs
+
+  agent_user:
+    type: string
+    default: 'ubuntu'
+
+
+node_templates:
+
+  healing_container:
+    type: cloudify.nodes.Compute
+    properties:
+      agent_config:
+        install_method: none
+
+  healing_dog:
+    type: healing_node_type
+    relationships:
+      - target: bind9_host
+        type: cloudify.relationships.depends_on
+      - target: healing_container
+        type: cloudify.relationships.contained_in
+    properties:
+      nodes_to_monitor:
+        - bind9_host
+
+  dns_vm_ip:
+    type: cloudify.openstack.nodes.FloatingIP
+
+
+  dns_app_security_groups:
+    type: cloudify.openstack.nodes.SecurityGroup
+    properties:
+      security_group:
+        description: Security group for DNS service with ssh
+      rules:
+        - port: 22
+          remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+        - port: 53
+          remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+        - port: 53
+          remote_ip_prefix: 0.0.0.0/0
+          protocol: udp
+
+
+  bind9_host:
+    type: cloudify.openstack.nodes.Server
+    properties:
+      resource_id: bind9_host
+      cloudify_agent:
+        user: { get_input: agent_user }
+      server:
+        image: { get_input: openstack_image_id }
+        flavor: { get_input: openstack_flavor_id }
+    interfaces:
+      cloudify.interfaces.monitoring_agent:
+          install:
+            implementation: diamond.diamond_agent.tasks.install
+            inputs:
+              diamond_config:
+                default:
+                  interval: 1
+          start: diamond.diamond_agent.tasks.start
+          stop: diamond.diamond_agent.tasks.stop
+          uninstall: diamond.diamond_agent.tasks.uninstall
+      cloudify.interfaces.monitoring:
+          start:
+            implementation: diamond.diamond_agent.tasks.add_collectors
+            inputs:
+              collectors_config:
+                default:
+                  CPUCollector: {}
+                  MemoryCollector: {}
+                  LoadAverageCollector: {}
+                  DiskUsageCollector:
+                    config:
+                      devices: x?vd[a-z]+[0-9]*$
+                  NetworkCollector: {}
+
+    relationships:
+      - type: cloudify.openstack.server_connected_to_floating_ip
+        target: dns_vm_ip
+      - type: cloudify.openstack.server_connected_to_security_group
+        target: dns_app_security_groups
+
+
+  bind9:
+    type: application.nodes.Bind9
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: bind9_host
+
+
+outputs:
+  endpoint:
+    description: Bind9 DNS server IP/Port
+    value:
+      dns_ip: { get_attribute: [ dns_vm_ip, floating_ip_address ] }
+      dns_port: 53
