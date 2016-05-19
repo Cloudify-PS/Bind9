@@ -68,7 +68,7 @@ node_templates:
 
 
   bind9_host:
-    type: cloudify.openstack.nodes.Server
+    type: bind9.nodes.MonitoredServer
     properties:
       resource_id: bind9_host
       cloudify_agent:
@@ -76,30 +76,6 @@ node_templates:
       server:
         image: { get_input: openstack_image_id }
         flavor: { get_input: openstack_flavor_id }
-    interfaces:
-      cloudify.interfaces.monitoring_agent:
-          install:
-            implementation: diamond.diamond_agent.tasks.install
-            inputs:
-              diamond_config:
-                default:
-                  interval: 1
-          start: diamond.diamond_agent.tasks.start
-          stop: diamond.diamond_agent.tasks.stop
-          uninstall: diamond.diamond_agent.tasks.uninstall
-      cloudify.interfaces.monitoring:
-          start:
-            implementation: diamond.diamond_agent.tasks.add_collectors
-            inputs:
-              collectors_config:
-                default:
-                  CPUCollector: {}
-                  MemoryCollector: {}
-                  LoadAverageCollector: {}
-                  DiskUsageCollector:
-                    config:
-                      devices: x?vd[a-z]+[0-9]*$
-                  NetworkCollector: {}
 
     relationships:
       - type: cloudify.openstack.server_connected_to_floating_ip
@@ -109,7 +85,7 @@ node_templates:
 
 
   bind9:
-    type: application.nodes.Bind9
+    type: bind9.nodes.Bind9
     relationships:
       - type: cloudify.relationships.contained_in
         target: bind9_host
