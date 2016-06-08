@@ -9,19 +9,6 @@ DPLID=$(ctx deployment id)
 currVenv=/root/${DPLID}/env
 ctx logger info "deployment_id = ${DPLID}, virtual env is ${currVenv}"
 pipPath=${currVenv}/bin/pip
-ctx logger info "Running ${pipPath} install influxdb  ... "
-${pipPath} install influxdb
-statusCode=$?
-if [ $statusCode -gt 0 ]; then 
-  ctx logger info "Aborting due to a failure with exit code ${statusCode} in ${pipPath} install influxdb"
-  exit ${statusCode}
-fi
-
-ctx logger info "Downloading scripts/healing/healing.py ..."
-LOC=$(ctx download-resource scripts/healing/healing.py)
-status_code=$?
-ctx logger info "ctx download-resource status code is ${status_code}"
-ctx logger info "LOC is ${LOC}"
 
 COMMAND="${currVenv}/bin/python ${LOC} \"${NTM}\" ${DPLID}"
 crontab_file=/tmp/mycron
