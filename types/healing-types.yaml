@@ -10,7 +10,10 @@ node_types:
       cloudify.interfaces.lifecycle:
         create:
           implementation: scripts/healing/healing-create.sh
-          executor: central_deployment_agent      
+          executor: central_deployment_agent
+        configure:
+          implementation: scripts/healing/healing-configure.sh
+          executor: central_deployment_agent
         start:
           implementation: scripts/healing/healing-start.sh
           executor: central_deployment_agent
