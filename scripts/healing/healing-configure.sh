@@ -28,7 +28,7 @@ CONFIG_FILE="${CONFIG_DIR}/healing_dog_${DEPLOYMNET_ID}"
 COMMAND="${currVenv}/bin/python ${HEALING_SCRIPT} \"${NODES_TO_MONITOR}\" ${DEPLOYMNET_ID}"
 
 ctx logger info "writing config file - ${CONFIG_FILE}  : ${COMMAND}"
-echo "*/1 * * * * ${COMMAND}" > ${CONFIG_FILE}
+echo "*/1 * * * * root ${COMMAND}" > ${CONFIG_FILE}
 
 
 ctx logger info "Linking config file to cron.d "
