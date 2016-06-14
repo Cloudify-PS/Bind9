@@ -1,2 +1,2 @@
 #! /bin/bash
-ctx logger info "Healing Start Script - Dose Nothing"
+ctx logger info "Healing Start Script - Does Nothing"

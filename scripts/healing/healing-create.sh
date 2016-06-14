@@ -6,22 +6,21 @@ CONFIG_DIR="/etc/healing"
 SCRIPT_BASE="/root"
 
 
-ctx logger info "Retrieving deployment_id"
-
+ctx logger info "Retrieved deployment_id: $DEPLOYMNET_ID"
 
 
 SCRIPT_DIR="${SCRIPT_BASE}/${DEPLOYMNET_ID}"
-
-
+ctx logger info "Script dir is: $SCRIPT_DIR"
+ctx logger info "Used python : $(which python)"
 ctx logger info "Creating Directories Config : ${CONFIG_DIR} , scripts ${SCRIPT_DIR}"
 
 mkdir -p ${CONFIG_DIR}
+mkdir -p ${SCRIPT_DIR_DIR}
 
 
 
-currVenv="${SCRIPT_DIR}/env"
-ctx logger info "deployment_id = ${DEPLOYMNET_ID}, virtual env is ${currVenv}"
-pipPath=${currVenv}/bin/pip
+pipPath=$(which pip)
+ctx logger info "deployment_id = ${DEPLOYMNET_ID}, current pip is ${pipPath}"
 ctx logger info "Running ${pipPath} install influxdb  ... "
 ${pipPath} install influxdb
 statusCode=$?

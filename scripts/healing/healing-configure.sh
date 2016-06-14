@@ -6,12 +6,9 @@ SCRIPT_BASE="/root"
 
 
 SCRIPT_DIR="${SCRIPT_BASE}/${DEPLOYMNET_ID}"
-
+ctx logger info $SCRIPT_DIR
 
 HEALING_SCRIPT="${SCRIPT_DIR}/healing.py"
-
-currVenv="${SCRIPT_DIR}/env"
-
 
 
 NODES_TO_MONITOR="$(ctx node properties nodes_to_monitor)"
@@ -25,7 +22,7 @@ ctx logger info "Retrieving nodes_to_monitor and deployment_id"
 CONFIG_FILE="${CONFIG_DIR}/healing_dog_${DEPLOYMNET_ID}"
 
 
-COMMAND="${currVenv}/bin/python ${HEALING_SCRIPT} \"${NODES_TO_MONITOR}\" ${DEPLOYMNET_ID}"
+COMMAND="python ${HEALING_SCRIPT} \"${NODES_TO_MONITOR}\" ${DEPLOYMNET_ID}"
 
 ctx logger info "writing config file - ${CONFIG_FILE}  : ${COMMAND}"
 echo "*/1 * * * * root ${COMMAND}" > ${CONFIG_FILE}
