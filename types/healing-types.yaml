@@ -3,9 +3,6 @@ node_types:
   
   healing_node_type:
     derived_from: cloudify.nodes.SoftwareComponent
-    properties:
-      nodes_to_monitor:
-        default: [] 
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
@@ -22,4 +19,14 @@ node_types:
           executor: central_deployment_agent
         delete:
           implementation: scripts/healing/healing-delete.sh
+          executor: central_deployment_agent
+
+relationships:
+
+  connect_node_to_monitor:
+    derived_from: cloudify.relationships.depends_on
+    target_interfaces:
+      cloudify.interfaces.relationship_lifecycle:
+        preconfigure:
+          implementation: scripts/healing/connect_node_to_monitor.py
           executor: central_deployment_agent

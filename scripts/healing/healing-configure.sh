@@ -11,7 +11,7 @@ ctx logger info $SCRIPT_DIR
 HEALING_SCRIPT="${SCRIPT_DIR}/healing.py"
 
 
-NODES_TO_MONITOR="$(ctx node properties nodes_to_monitor)"
+NODES_TO_MONITOR="$(ctx instance runtime_properties nodes_to_monitor)"
 NODES_TO_MONITOR=$(echo ${NODES_TO_MONITOR} | sed "s/u'/'/g")
 
 

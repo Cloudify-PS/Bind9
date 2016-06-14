@@ -31,10 +31,7 @@ node_templates:
     type: healing_node_type
     relationships:
       - target: bind9_host
-        type: cloudify.relationships.depends_on
-    properties:
-      nodes_to_monitor:
-        - bind9_host
+        type: connect_node_to_monitor
 
   dns_vm_ip:
     type: cloudify.openstack.nodes.FloatingIP
@@ -72,7 +69,6 @@ node_templates:
         target: dns_vm_ip
       - type: cloudify.openstack.server_connected_to_security_group
         target: dns_app_security_groups
-
 
   bind9:
     type: bind9.nodes.Bind9
