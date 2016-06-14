@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 ctx logger info "starting DNS..."
+
 # Install BIND.
 sudo apt-get update
 sudo DEBIAN_FRONTEND=noninteractive apt-get install bind9 --yes
 # Update BIND configuration with the specified zone and key.
+sudo bash -c "echo '127.0.0.1  $(ctx node properties resource_id)' >> /etc/hosts"
+
 sudo bash -c 'cat >> /etc/bind/named.conf.local << EOF
 key example.com. {
   algorithm "HMAC-MD5";
