@@ -20,3 +20,6 @@ node_types:
         stop:
           implementation: scripts/healing/healing-stop.sh
           executor: central_deployment_agent
+        delete:
+          implementation: scripts/healing/healing-delete.sh
+          executor: central_deployment_agent
