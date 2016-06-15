@@ -19,8 +19,7 @@ ctx logger info "DNS IP address is ${dns_ip}"
 sudo echo ${dns_ip} > /home/ubuntu/dnsfile
 
 db_conf_path=$(ctx download-resource scripts/bind9/resources/db.example.com)
+sed -e "s/\${ADDRESS}/$(hostname -I)/g" -e "s/\${DATE}/$(date +%Y%m%d%H)/g" -i ${db_conf_path}
 cat ${db_conf_path} | sudo tee /var/lib/bind/db.example.com
 
 sudo chown root:bind /var/lib/bind/db.example.com
-# Now that BIND configuration is correct, kick it to reload.
-sudo service bind9 reload
