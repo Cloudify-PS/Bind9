@@ -2,11 +2,9 @@ import sys
 from cloudify_rest_client import CloudifyClient
 from influxdb.influxdb08 import InfluxDBClient
 from influxdb.influxdb08.client import InfluxDBClientError
-import json 
 from os import utime
 from os import getpid 
 from os import path
-import time
 import datetime
 
 # check against influxdb which nodes are available CPUtotal
@@ -74,10 +72,11 @@ def main(argv):
     pid_file.write('%i' % getpid())
     pid_file.close()
     for i in range(len(argv)):
-        print ("argv={0}\n".format(argv[i]))
-    nodes_to_monitor = json.loads(argv[1].replace("'", '"'))
+        print("argv={0}\n".format(argv[i]))
+    with open(argv[1]) as f:
+        nodes_to_monitor = filter(None, f.read().split('\n'))
     deployment_id = argv[2]
-    print ("nodes={0}\n".format(nodes_to_monitor))
+    print("nodes={0}\n".format(nodes_to_monitor))
     check_heal(nodes_to_monitor, deployment_id)
 
 if __name__ == '__main__':

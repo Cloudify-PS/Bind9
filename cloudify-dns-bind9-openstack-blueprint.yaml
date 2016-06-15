@@ -24,14 +24,10 @@ inputs:
     type: string
     default: 'ubuntu'
 
-
 node_templates:
 
   healing_dog:
     type: healing_node_type
-    relationships:
-      - target: bind9_host
-        type: connect_node_to_monitor
 
   dns_vm_ip:
     type: cloudify.openstack.nodes.FloatingIP
@@ -57,7 +53,6 @@ node_templates:
   bind9_host:
     type: bind9.nodes.MonitoredServer
     properties:
-      resource_id: bind9_host
       cloudify_agent:
         user: { get_input: agent_user }
       server:
@@ -69,14 +64,16 @@ node_templates:
         target: dns_vm_ip
       - type: cloudify.openstack.server_connected_to_security_group
         target: dns_app_security_groups
+      - target: healing_dog
+        type: connect_node_to_monitor
 
   bind9:
     type: bind9.nodes.Bind9
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
+        configure:
           inputs:
-            dns_ip: { get_attribute: [dns_vm_ip, floating_ip_address] }
+            dns_ip: { get_attribute: [ dns_vm_ip, floating_ip_address ] }
     relationships:
       - type: cloudify.relationships.contained_in
         target: bind9_host

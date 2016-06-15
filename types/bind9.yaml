@@ -55,10 +55,13 @@ node_types:
     derived_from: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
-        create:
+        configure:
           implementation: scripts/bind9/install.sh
           inputs:
             dns_ip:
               default: ''
+            host_name:
+              default: ''
         start: scripts/bind9/start.sh
         stop: scripts/bind9/stop.sh
+

@@ -28,5 +28,5 @@ relationships:
     target_interfaces:
       cloudify.interfaces.relationship_lifecycle:
         preconfigure:
-          implementation: scripts/healing/connect_node_to_monitor.py
+          implementation: scripts/healing/connect_node_to_monitor.sh
           executor: central_deployment_agent
