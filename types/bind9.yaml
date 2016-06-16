@@ -55,7 +55,7 @@ node_types:
     derived_from: cloudify.nodes.ApplicationServer
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
+        create:
           implementation: scripts/bind9/install.sh
           inputs:
             dns_ip:

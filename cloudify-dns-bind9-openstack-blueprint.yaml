@@ -71,7 +71,7 @@ node_templates:
     type: bind9.nodes.Bind9
     interfaces:
       cloudify.interfaces.lifecycle:
-        configure:
+        create:
           inputs:
             dns_ip: { get_attribute: [ dns_vm_ip, floating_ip_address ] }
     relationships:
