@@ -24,6 +24,9 @@ inputs:
     type: string
     default: 'ubuntu'
 
+  number_of_instances:
+    default: 1
+
 node_templates:
 
   healing_dog:
@@ -78,6 +81,16 @@ node_templates:
       - type: cloudify.relationships.contained_in
         target: bind9_host
 
+groups:
+  vm_and_ip:
+    members: [bind9_host, bind9, dns_vm_ip]
+
+policies:
+  scale_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances: { get_input: number_of_instances }
+    targets: [vm_and_ip]
 
 outputs:
   endpoint:
