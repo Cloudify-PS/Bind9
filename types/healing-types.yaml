@@ -3,6 +3,13 @@ node_types:
   
   healing_node_type:
     derived_from: cloudify.nodes.SoftwareComponent
+    properties:
+      log_file:
+        default: '/tmp/logfile'
+      cooldown_file:
+        default: '/tmp/cooldown'
+      pid_file:
+        default: '/tmp/healing_pidfile'
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
