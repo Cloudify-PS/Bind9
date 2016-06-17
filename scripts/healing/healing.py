@@ -27,36 +27,59 @@ def _parse_args():
     parser.add_argument('-c',
                         '--cooldown-file',
                         metavar='<cooldown file>')
+    parser.add_argument('-ct',
+                        '--cooldown-time',
+                        metavar='<cooldown time>')
     parser.add_argument('-p',
                         '--pid-file',
                         metavar='<pid file>')
+    parser.add_argument('-db',
+                        '--database',
+                        metavar='<database name>')
+    parser.add_argument('-h',
+                        '--host',
+                        metavar='<host>')
+    parser.add_argument('-i',
+                        '--influxdb-port',
+                        metavar='<influxdb port>')
+    parser.add_argument('-t',
+                        '--time-diff',
+                        metavar='<time diff>')
 
     return parser.parse_args()
 
 
-def cool_down(cool_down_path):
-    if os.path.isfile(cool_down_path):
+def cool_down(cooldown_path, cooldown_time):
+    if os.path.isfile(cooldown_path):
         now = datetime.datetime.now()
         then = datetime.datetime.fromtimestamp(
-            os.path.getmtime(cool_down_path))
+            os.path.getmtime(cooldown_path))
         time_delta = now - then
         seconds = time_delta.total_seconds()
-        if seconds < 420:
+        if seconds < cooldown_time:
             return True
     else:
         pass
     return False
 
 
-def check_heal(nodes_to_monitor, deployment_id, cool_down_path, logger):
-    if cool_down(cool_down_path):
+def check_heal(nodes_to_monitor,
+               deployment_id,
+               cooldown_path,
+               cooldown_time,
+               time_diff,
+               influxdb_port,
+               database,
+               host,
+               logger):
+    if cool_down(cooldown_path, cooldown_time):
         logger.info('Exiting from check_heal...')
         exit(0)
     logger.info('In check_heal. Getting clients.')
-    influx_client = InfluxDBClient(host='localhost',
-                                   port=8086,
-                                   database='cloudify')
-    cloudify_client = CloudifyClient('localhost')
+    influx_client = InfluxDBClient(host=host,
+                                   port=influxdb_port,
+                                   database=database)
+    cloudify_client = CloudifyClient(host)
     # compare influx data (monitoring) to Cloudify desired state
 
     for node_name in nodes_to_monitor:
@@ -65,19 +88,20 @@ def check_heal(nodes_to_monitor, deployment_id, cool_down_path, logger):
                         % (deployment_id, node_name, instance_id))
             q_string = 'SELECT MEAN(value) FROM ' \
                        '/{0}\.{1}\.{2}\.cpu_total_system/ GROUP BY time(10s) ' \
-                       'WHERE  time > now() - 40s'.format(deployment_id,
-                                                          node_name,
-                                                          instance_id)
+                       'WHERE  time > now() - {3}s'.format(deployment_id,
+                                                           node_name,
+                                                           instance_id,
+                                                           time_diff)
             logger.info('query string is:{0}'.format(q_string))
             try:
                 result = influx_client.query(q_string)
                 logger.info('Query result is {0} \n'.format(result))
                 if not result:
                     logger.info("Opening {0} and closing it\n".format(
-                        cool_down_path))
-                    open(cool_down_path, 'a').close()
-                    logger.info("utime {0}\n".format(cool_down_path))
-                    os.utime(cool_down_path, None)
+                        cooldown_path))
+                    open(cooldown_path, 'a').close()
+                    logger.info("utime {0}\n".format(cooldown_path))
+                    os.utime(cooldown_path, None)
                     logger.info("Healing {0}\n".format(instance_id))
                     execution = cloudify_client.executions.start(
                         deployment_id,
@@ -88,7 +112,7 @@ def check_heal(nodes_to_monitor, deployment_id, cool_down_path, logger):
                 logger.info('DBClienterror {0}\n'.format(str(ee)))
                 logger.info('instance id is {0}\n'.format(str(instance_id)))
             except Exception as e:
-                logger.info(str(e))
+                logger.error('An error : %s' % str(e))
 
 
 def _set_logger(args):
@@ -110,7 +134,6 @@ def main():
     args = _parse_args()
     logger = _set_logger(args)
     pid_file_path = args.pid_file
-    cool_down_path = args.cooldown_file
     with open(pid_file_path, 'w') as pid_file:
         pid_file.write('%i' % os.getpid())
     with open(args.nodes_to_monitor) as f:
@@ -124,7 +147,12 @@ def main():
     logger.info('Nodes to monitor: %s' % str(nodes_to_monitor))
     check_heal(nodes_to_monitor,
                args.deployment_id,
-               cool_down_path,
+               args.cooldown_file,
+               args.cooldown_time,
+               args.time_diff,
+               args.influxdb_port,
+               args.database,
+               args.host,
                logger)
 
 if __name__ == '__main__':

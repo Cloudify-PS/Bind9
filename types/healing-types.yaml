@@ -8,8 +8,18 @@ node_types:
         default: '/tmp/logfile'
       cooldown_file:
         default: '/tmp/cooldown'
+      cooldown_time:
+        default: 420
       pid_file:
         default: '/tmp/healing_pidfile'
+      time_diff:
+        default: 40
+      influxdb_port:
+        default: 8086
+      host:
+        default: localhost
+      database:
+        default: cloudify
     interfaces:
       cloudify.interfaces.lifecycle:
         create:
