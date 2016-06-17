@@ -63,8 +63,11 @@ def check_heal(nodes_to_monitor, deployment_id, cool_down_path, logger):
         for instance_id in nodes_to_monitor[node_name]:
             logger.info("Deployment_id: %s, node_name: %s, instance_id: %s "
                         % (deployment_id, node_name, instance_id))
-            q_string = 'SELECT MEAN(value) FROM /' + deployment_id + '\.' + node_name + '\.' + instance_id + '\.cpu_total_system/ GROUP BY time(10s) '\
-                     'WHERE  time > now() - 40s'
+            q_string = 'SELECT MEAN(value) FROM ' \
+                       '/{0}\.{1}\.{2}\.cpu_total_system/ GROUP BY time(10s) ' \
+                       'WHERE  time > now() - 40s'.format(deployment_id,
+                                                          node_name,
+                                                          instance_id)
             logger.info('query string is:{0}'.format(q_string))
             try:
                 result = influx_client.query(q_string)
@@ -76,8 +79,11 @@ def check_heal(nodes_to_monitor, deployment_id, cool_down_path, logger):
                     logger.info("utime {0}\n".format(cool_down_path))
                     os.utime(cool_down_path, None)
                     logger.info("Healing {0}\n".format(instance_id))
-                    execution_id = cloudify_client.executions.start(deployment_id, 'heal', {'node_instance_id': instance_id})
-                    logger.info('execution_id is {0}\n'.format(str(execution_id)))
+                    execution = cloudify_client.executions.start(
+                        deployment_id,
+                        'heal',
+                        {'node_instance_id': instance_id})
+                    logger.info('execution: {0}'.format(str(execution)))
             except InfluxDBClientError as ee:
                 logger.info('DBClienterror {0}\n'.format(str(ee)))
                 logger.info('instance id is {0}\n'.format(str(instance_id)))
