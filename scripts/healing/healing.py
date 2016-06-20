@@ -56,7 +56,7 @@ def cool_down(cooldown_path, cooldown_time):
             os.path.getmtime(cooldown_path))
         time_delta = now - then
         seconds = time_delta.total_seconds()
-        if seconds < cooldown_time:
+        if seconds < int(cooldown_time):
             return True
     else:
         pass
@@ -77,7 +77,7 @@ def check_heal(nodes_to_monitor,
         exit(0)
     logger.info('In check_heal. Getting clients.')
     influx_client = InfluxDBClient(host=host,
-                                   port=influxdb_port,
+                                   port=int(influxdb_port),
                                    database=database)
     cloudify_client = CloudifyClient(host)
     # compare influx data (monitoring) to Cloudify desired state
