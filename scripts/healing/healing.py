@@ -83,14 +83,16 @@ def check_heal(nodes_to_monitor,
     # compare influx data (monitoring) to Cloudify desired state
 
     for node_name in nodes_to_monitor:
-        for instance_id in nodes_to_monitor[node_name]:
+        instances = cloudify_client.node_instances.list(deployment_id,
+                                                        node_name)
+        for instance in instances:
             logger.info("Deployment_id: %s, node_name: %s, instance_id: %s "
-                        % (deployment_id, node_name, instance_id))
+                        % (deployment_id, node_name, instance.id))
             q_string = 'SELECT MEAN(value) FROM ' \
                        '/{0}\.{1}\.{2}\.cpu_total_system/ GROUP BY time(10s) ' \
                        'WHERE  time > now() - {3}s'.format(deployment_id,
                                                            node_name,
-                                                           instance_id,
+                                                           instance.id,
                                                            time_diff)
             logger.info('query string is:{0}'.format(q_string))
             try:
@@ -102,15 +104,15 @@ def check_heal(nodes_to_monitor,
                     open(cooldown_path, 'a').close()
                     logger.info("utime {0}\n".format(cooldown_path))
                     os.utime(cooldown_path, None)
-                    logger.info("Healing {0}\n".format(instance_id))
+                    logger.info("Healing {0}\n".format(instance.id))
                     execution = cloudify_client.executions.start(
                         deployment_id,
                         'heal',
-                        {'node_instance_id': instance_id})
+                        {'node_instance_id': instance.id})
                     logger.info('execution: {0}'.format(str(execution)))
             except InfluxDBClientError as ee:
                 logger.info('DBClienterror {0}\n'.format(str(ee)))
-                logger.info('instance id is {0}\n'.format(str(instance_id)))
+                logger.info('instance id is {0}\n'.format(str(instance.id)))
             except Exception as e:
                 logger.error('An error : %s' % str(e))
 
@@ -137,13 +139,7 @@ def main():
     with open(pid_file_path, 'w') as pid_file:
         pid_file.write('%i' % os.getpid())
     with open(args.nodes_to_monitor) as f:
-        lines = filter(None, f.read().split('\n'))
-        nodes_to_monitor = {}
-        for line in lines:
-            node_name, instance_id = line.split(',')
-            nodes = nodes_to_monitor.get(node_name, [])
-            nodes.append(instance_id)
-            nodes_to_monitor[node_name] = nodes
+        nodes_to_monitor = list(set(filter(None, f.read().split('\n'))))
     logger.info('Nodes to monitor: %s' % str(nodes_to_monitor))
     check_heal(nodes_to_monitor,
                args.deployment_id,

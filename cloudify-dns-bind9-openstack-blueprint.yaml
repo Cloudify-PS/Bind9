@@ -31,6 +31,9 @@ node_templates:
 
   healing_dog:
     type: healing_node_type
+    relationships:
+      - target: bind9_host
+        type: connect_node_to_monitor
 
   dns_vm_ip:
     type: cloudify.openstack.nodes.FloatingIP
@@ -67,8 +70,6 @@ node_templates:
         target: dns_vm_ip
       - type: cloudify.openstack.server_connected_to_security_group
         target: dns_app_security_groups
-      - target: healing_dog
-        type: connect_node_to_monitor
 
   bind9:
     type: bind9.nodes.Bind9
