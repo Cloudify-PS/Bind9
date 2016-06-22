@@ -1,0 +1,15 @@
+key example.com. {
+  algorithm "HMAC-MD5";
+  secret "8r6SIIX/cWE6b0Pe8l2bnc/v5vYbMSYvj+jQPP4bWe+CXzOpojJGrXI7iiustDQdWtBHUpWxweiHDWvLIp6/zw==";
+};
+
+
+zone "example.com" IN {
+  type master;
+  file "/var/lib/bind/db.example.com";
+  allow-update {
+    key example.com.;
+  };
+};
+
+zone "openstacklocal" {type master; file "/etc/bind/openstacklocal.local";};

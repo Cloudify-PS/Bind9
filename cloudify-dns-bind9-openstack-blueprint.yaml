@@ -1,24 +1,22 @@
-tosca_definitions_version: cloudify_dsl_1_2
+tosca_definitions_version: cloudify_dsl_1_3
 
 imports:
 
-  - http://www.getcloudify.org/spec/cloudify/3.3.1/types.yaml 
-  - http://www.getcloudify.org/spec/openstack-plugin/1.3.1/plugin.yaml 
-  - http://www.getcloudify.org/spec/diamond-plugin/1.3.1/plugin.yaml 
+  - http://www.getcloudify.org/spec/cloudify/3.4m5/types.yaml
+  - http://www.getcloudify.org/spec/openstack-plugin/1.4/plugin.yaml
+  - http://www.getcloudify.org/spec/diamond-plugin/1.3.3/plugin.yaml
   - types/bind9.yaml
   - types/healing-types.yaml
 
 inputs:
 
-  # Openstack Inputs
+  # Compute Inputs
 
-  openstack_image_id:
+  image_id:
     type: string
-    default: '05bb3a46-ca32-4032-bedd-8d7ebd5c8100'
 
-  openstack_flavor_id:
+  flavor_id:
     type: string
-    default: '62ed898b-0871-481a-9bb4-ac5f81263b33'
 
   # General Inputs
 
@@ -26,25 +24,16 @@ inputs:
     type: string
     default: 'ubuntu'
 
+  number_of_instances:
+    default: 1
 
 node_templates:
-
-  healing_container:
-    type: cloudify.nodes.Compute
-    properties:
-      agent_config:
-        install_method: none
 
   healing_dog:
     type: healing_node_type
     relationships:
       - target: bind9_host
-        type: cloudify.relationships.depends_on
-      - target: healing_container
-        type: cloudify.relationships.contained_in
-    properties:
-      nodes_to_monitor:
-        - bind9_host
+        type: connect_node_to_monitor
 
   dns_vm_ip:
     type: cloudify.openstack.nodes.FloatingIP
@@ -70,12 +59,11 @@ node_templates:
   bind9_host:
     type: bind9.nodes.MonitoredServer
     properties:
-      resource_id: bind9_host
       cloudify_agent:
         user: { get_input: agent_user }
       server:
-        image: { get_input: openstack_image_id }
-        flavor: { get_input: openstack_flavor_id }
+        image: { get_input: image_id }
+        flavor: { get_input: flavor_id }
 
     relationships:
       - type: cloudify.openstack.server_connected_to_floating_ip
@@ -83,13 +71,27 @@ node_templates:
       - type: cloudify.openstack.server_connected_to_security_group
         target: dns_app_security_groups
 
-
   bind9:
     type: bind9.nodes.Bind9
+    interfaces:
+      cloudify.interfaces.lifecycle:
+        create:
+          inputs:
+            dns_ip: { get_attribute: [ dns_vm_ip, floating_ip_address ] }
     relationships:
       - type: cloudify.relationships.contained_in
         target: bind9_host
 
+groups:
+  vm_and_ip:
+    members: [bind9_host, bind9, dns_vm_ip]
+
+policies:
+  scale_policy:
+    type: cloudify.policies.scaling
+    properties:
+      default_instances: { get_input: number_of_instances }
+    targets: [vm_and_ip]
 
 outputs:
   endpoint:
